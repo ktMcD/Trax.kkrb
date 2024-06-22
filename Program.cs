@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Windows.Documents;
+using System.Windows.Media.TextFormatting;
 using System.Windows.Xps.Packaging;
 
 namespace Trax.kkrb
@@ -123,83 +124,46 @@ namespace Trax.kkrb
 
         public void ProcessText(string convertedText)
         {
+
+            int iHour = 0;
+            int iWheelPos = 0;
+            int iMinutePos = 0;
             Random rando = new Random();
             string txtFile = outFile;
             StreamWriter writer = new StreamWriter(script, false);
             writer.WriteLine($"KKRB Script for {logDate.ToString("ddd")}, {logDate.ToString("M-d-yy")}");
             string whichTag = "";
-            
-            // To read a text file line by line 
+
+            // th
             if (File.Exists(txtFile))
             {
                 // Store each line in array of strings 
                 string[] lines = File.ReadAllLines(txtFile);
                 foreach (string line in lines)
                 {
-                    string[] fields = line.Split('|');
-                    if (fields.Length > 2 &&
+                    iHour = GetHour(line);
+                    if ((iHour >= 6 && iHour < 18) &&
                         !line.Contains("SWEEPER") &&
                         !line.Contains("Artist") &&
                         !line.Contains("WX") &&
-                        fields[2] != "NEW" &&
-                        (line.StartsWith("06:") ||
-                        line.StartsWith("07:") ||
-                        line.StartsWith("08:") ||
-                        line.StartsWith("09:") ||
-                        line.StartsWith("10:") ||
-                        line.StartsWith("11:") ||
-                        line.StartsWith("12:") ||
-                        line.StartsWith("13:") ||
-                        line.StartsWith("14:") ||
-                        line.StartsWith("15:") ||
-                        line.StartsWith("16:") ||
-                        line.StartsWith("17:")))
+                        !line.Contains("|NEW|DA1000|"))
                     {
+                        string[] fields = line.Split('|');
                         if (line.Contains("DA1000"))
                         {
-                            writer.WriteLine($"");
-                            writer.WriteLine($"***************** {fields[0]} HOUR *****************");
+                            Console.WriteLine($"");
+                            Console.WriteLine($"***************** {fields[0]} HOUR *****************");
                         }
-                        else if (line.Contains("JV06") ||
-                                 line.Contains("JV07") ||
-                                 line.Contains("JV08") ||
-                                 line.Contains("JV09") ||
-                                 line.Contains("JV10") ||
-                                 line.Contains("JV11") ||
-                                 line.Contains("JV12") ||
-                                 line.Contains("JV13") ||
-                                 line.Contains("JV14") ||
-                                 line.Contains("JV15") ||
-                                 line.Contains("JV16") ||
-                                 line.Contains("JV17") ||
-                                 line.Contains("JN06") ||
-                                 line.Contains("JN07") ||
-                                 line.Contains("JN08") ||
-                                 line.Contains("JN09") ||
-                                 line.Contains("JN10") ||
-                                 line.Contains("JN11") ||
-                                 line.Contains("JN12") ||
-                                 line.Contains("JN13") ||
-                                 line.Contains("JN14") ||
-                                 line.Contains("JN15") ||
-                                 line.Contains("JN16") ||
-                                 line.Contains("JN17") ||
-                                 line.Contains("JNTIME"))
+                        // get voice track (jv0608, jn...//
+                        else if (line.ToLower().Contains("voice track") ||
+                                 line.ToLower().Contains("voicetrack"))
                         {
-                            writer.WriteLine($"");
-                            writer.WriteLine($"{fields[3]}");
-                            if (!line.Contains("JV0620") &&
-                                !line.Contains("JV0720") &&
-                                !line.Contains("JV0820") &&
-                                !line.Contains("JV0920") &&
-                                !line.Contains("JV1020") &&
-                                !line.Contains("JV1120") &&
-                                !line.Contains("JV1220") &&
-                                !line.Contains("JV1320") &&
-                                !line.Contains("JV1420") &&
-                                !line.Contains("JV1520") &&
-                                !line.Contains("JV1620") &&
-                                !line.Contains("JV1720"))
+                            iWheelPos = GetWheelPosition(fields[3]);
+                            iMinutePos = GetMinutePosition(fields[3]);
+                            Console.WriteLine($"");
+                            Console.WriteLine($"{fields[3]}");
+                            Console.WriteLine($"----------------");
+                            if (iMinutePos != 20)
                             {
                                 int randoNum = rando.Next();
                                 if (randoNum % 3 == 0)
@@ -217,87 +181,92 @@ namespace Trax.kkrb
                                     // "Sunny 107: the Basin's soft rock station; "
                                     whichTag = tag3;
                                 }
-                                writer.WriteLine($"----------------");
-                                writer.WriteLine(whichTag);
-                                writer.WriteLine();
-                            }
-                            else if (line.Contains("JV0620") ||
-                                     line.Contains("JV0720") ||
-                                     line.Contains("JV0820") ||
-                                     line.Contains("JV0920") ||
-                                     line.Contains("JV1020") ||
-                                     line.Contains("JV1120") ||
-                                     line.Contains("JV1220") ||
-                                     line.Contains("JV1320") ||
-                                     line.Contains("JV1420") ||
-                                     line.Contains("JV1520") ||
-                                     line.Contains("JV1620") ||
-                                     line.Contains("JV1720"))
-                            {
-                                writer.WriteLine("------------");
-                                writer.WriteLine(":20 BREAK TAGLINE HERE ");
-                                writer.WriteLine();
-                            }
-                        }
-                        else if (line.Contains("STOPSET"))
-                        {
-                            writer.WriteLine($"STOPSET");
-                        }
-                        else if (fields[2] == "CM" ||
-                            fields[3] == "LIVE")
-                        {
-                            if (fields[3].StartsWith("DA"))
-                            {
-                                writer.WriteLine($"{fields[1]} {fields[2]} {fields[4]} {fields[5]} {fields[6]}");
+                                Console.WriteLine(whichTag);
                             }
                             else
                             {
-                                writer.WriteLine($"{fields[1]} {fields[2]} {fields[3]} {fields[4]} {fields[5]} {fields[6]}");
+                                Console.WriteLine(":20 BREAK TAGLINE HERE ");
                             }
-                        }
+                            Console.WriteLine();
+
+                        } // line contains voicetrack or voice track
                         else
                         {
-                            if (fields.Length == 6)
+                            foreach (string field in fields)
                             {
-                                writer.WriteLine($"66666666");
-                                writer.WriteLine($"{fields[0]} -- {fields[1]} -- {fields[2]} -- {fields[3]} -- {fields[4]} -- {fields[5]}");
+                                Console.Write($"{field} ");
                             }
-                            if (fields.Length == 7)
-                            {
-                                writer.WriteLine($"77777777");
-                                writer.WriteLine($"{fields[0]} -- {fields[1]} -- {fields[2]} -- {fields[3]} -- {fields[4]} -- {fields[5]} -- {fields[6]}");
-                            }
-                            if (fields.Length == 8)
-                            {
-                                writer.WriteLine($"{fields[0]} -- {fields[1]} -- {fields[2]} -- {fields[3]} -- {fields[4]} -- {fields[5]} -- {fields[6]} -- {fields[7]}");
-                            }
-                            if (fields.Length == 9)
-                            {
-                                writer.WriteLine($"{fields[0]} -- {fields[1]} -- {fields[6]} -- {fields[7]} -- {fields[8]}");
-                            }
+                            Console.WriteLine() ;
                         }
                     }
-                
                 }
+                writer.Flush();
+                writer.Close();
+                writer.Dispose();
+                // Console.ReadLine();
+                /*
+                            if (File.Exists(outFile))
+                            {
+                                File.Delete(outFile);
+                            }
+                */
+                /*            if (File.Exists(inFile))
+                            {
+                                File.Delete(inFile);
+                            }
+                */
             }
-            writer.WriteLine("");
-            writer.WriteLine("*******************************************************");
-            writer.WriteLine("**************KATIE: TURN ON YOUR FRIDGE!**************");
-            writer.Flush();
-            writer.Close();
-            writer.Dispose();
-            // Console.ReadLine();
-/*
-            if (File.Exists(outFile))
+        } // ProcessText
+
+        private int GetMinutePosition(string vtfield)
+        {
+            int minutePos = 0;
+            string subst = "";
+            if (vtfield != null &&
+                vtfield.Length > 0)
             {
-                File.Delete(outFile);
-            }
-*/
-            if (File.Exists(inFile))
-            {
-                File.Delete(inFile);
+                subst = vtfield.Substring(vtfield.Length - 2, 2);
             }
 
-        }
+            if (int.TryParse(subst, out minutePos))
+            {
+                return minutePos;
+            }
+            return 0;
+        } // GetMinutePosition
+
+        private int GetWheelPosition(string vtfield)
+        {
+            int wheelPos = 0;
+            string subst = "";
+            if (vtfield != null &&
+                vtfield.Length > 0)
+            {
+                subst = vtfield.Substring(vtfield.Length - 4, 4);
+            }
+
+            if (int.TryParse(subst, out wheelPos))
+            {
+                return wheelPos;
+            }
+            return 0;
+        } // GetWheelPosition
+
+        private int GetHour(string line)
+        {
+            int hour = 0;
+            string subst = "";
+            if (line != null &&
+                line.Length > 0)
+            {
+                subst = line.Substring(0, 2);
+            }
+
+            if (int.TryParse(subst, out hour))
+            {
+                return hour;
+            }
+            return 0;
+        } // GetHour
     } // class
 } // namespace
