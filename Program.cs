@@ -99,7 +99,6 @@ namespace Trax.kkrb
             if (File.Exists(outFile))
             {
                 string[] lines = File.ReadAllLines(outFile);
-                /* foreach is a PITA */
                 for (int i = 0; i < lines.Length; i++)
                 {
                     string[] fields = lines[i].Split(' ');
