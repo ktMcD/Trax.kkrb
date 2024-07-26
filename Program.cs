@@ -111,9 +111,10 @@ namespace Trax.kkrb
                         fields[2] != "NEW")
                     {
                         thisLine = fields[2];
-                        if (lines[i].Contains("VOICETRACK"))
+                        if (lines[i].Contains("VOICETRACK") ||
+                            lines[i].Contains("Voice Track"))
                         {
-                            whichTag = SelectTag(rando.Next(7, 2000));
+                            whichTag = SelectTag(rando.Next(7, 10000));
                             writer.WriteLine();
                             writer.WriteLine($"{fields[3]}");
                             writer.WriteLine("----------------");
@@ -155,15 +156,15 @@ namespace Trax.kkrb
             {
                 return tag4;
             }
-            if (randomTag % 7 == 0)
+            if (randomTag % 2 == 0)
             {
-                return tag1;
+                return tag2;
             }
-            if (randomTag % 11 == 0)
+            if (randomTag % 3 == 0)
             {
                 return tag3;
             }
-            return tag2;
+            return tag1;
         }
 
 
