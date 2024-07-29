@@ -1,11 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.IO;
 using System.Text;
-using System.Windows.Documents;
-using System.Windows.Media.TextFormatting;
-using System.Windows.Xps.Packaging;
 using iTextSharp.text.pdf;
 using iTextSharp.text.pdf.parser;
 
@@ -58,7 +54,6 @@ namespace Trax.kkrb
 
             }
             rawText = GetTextFromPDF();
-            //Console.WriteLine(rawText);
             ProcessText();
         }
 
@@ -92,6 +87,7 @@ namespace Trax.kkrb
             writer.WriteLine($"KKRB Script for {logDate.ToString("ddd")}, {logDate.ToString("M-d-yy")}");
             writer.WriteLine("------------------------------------------------------------");
             writer.WriteLine();
+            string cTopOfHour = "";
             string whichTag;
             string prevLine = "";
             string thisLine = "";
@@ -101,46 +97,83 @@ namespace Trax.kkrb
                 string[] lines = File.ReadAllLines(outFile);
                 for (int i = 0; i < lines.Length; i++)
                 {
-                    string[] fields = lines[i].Split(' ');
                     iHour = GetHour(lines[i]);
-                    if ((iHour >= 6 && iHour < 18) &&
-                        !lines[i].Contains("SWEEPER") &&
-                        !lines[i].Contains("Artist") &&
-                        !lines[i].Contains("WX") &&
-                        !lines[i].Contains("Stock Market") &&
-                        fields[2] != "NEW")
+                    if (lines[i].Contains("Legal"))
                     {
-                        thisLine = fields[2];
-                        if (lines[i].Contains("VOICETRACK") ||
-                            lines[i].Contains("Voice Track"))
+                        cTopOfHour = "yes";
+                    }
+                    if (iHour >= 6 && iHour < 18)
+                    {
+                        string[] fields = lines[i].Split(' ');
+                        if (cTopOfHour == "yes")
                         {
-                            whichTag = SelectTag(rando.Next(7, 10000));
+                            if (iHour > 12)
+                            {
+                                switch (iHour)
+                                {
+                                    case 13:
+                                        iHour = 1;
+                                        break;
+                                    case 14:
+                                        iHour = 2;
+                                        break;
+                                    case 15:
+                                        iHour = 3;
+                                        break;
+                                    case 16:
+                                        iHour = 4;
+                                        break;
+                                    case 17:
+                                        iHour = 5;
+                                        break;
+                                }
+                            }
+                            cTopOfHour = "no";
                             writer.WriteLine();
-                            writer.WriteLine($"{fields[3]}");
-                            writer.WriteLine("----------------");
-                            writer.WriteLine($"{whichTag}");
+                            writer.WriteLine("*****************************************");
+                            writer.WriteLine($"Top of the {iHour}:00:00 hour");
+                            writer.WriteLine("*****************************************");
                             writer.WriteLine();
                         }
-                        else
+                        if (!lines[i].Contains("SWEEPER") &&
+                            !lines[i].Contains("Artist") &&
+                            !lines[i].Contains("WX") &&
+                            !lines[i].Contains("Stock Market") &&
+                            fields[2] != "NEW")
                         {
-                            if (lines[i].Contains("STOPSET"))
+                            thisLine = fields[2];
+                            if (lines[i].Contains("VOICETRACK") ||
+                                lines[i].Contains("Voice Track"))
                             {
-                                writer.WriteLine($"{fields[5]} {fields[6]}");
-                            }
-
-                            else if (prevLine == "CM" &&
-                                     thisLine != prevLine)
-                            {
+                                whichTag = SelectTag(rando.Next(7, 10000));
+                                writer.WriteLine();
+                                writer.WriteLine($"{fields[3]}");
+                                writer.WriteLine("----------------");
+                                writer.WriteLine($"{whichTag}");
                                 writer.WriteLine();
                             }
-                            if (!lines[i].Contains("STOPSET"))
+                            else
                             {
-                                writer.WriteLine($"{lines[i]}");
+                                if (lines[i].Contains("STOPSET"))
+                                {
+                                    writer.WriteLine($"{fields[5]} {fields[6]}");
+                                }
+
+                                else if (prevLine == "CM" &&
+                                         thisLine != prevLine)
+                                {
+                                    writer.WriteLine();
+                                }
+                                if (!lines[i].Contains("STOPSET"))
+                                {
+                                    writer.WriteLine($"{lines[i]}");
+                                }
+
                             }
                         }
-                    }
-                    prevLine = thisLine;                    
-                }
+                        prevLine = thisLine;
+                    } // iHour >= 6 && < 18
+                } // for loop
             }
             writer.Flush();
             writer.Close();
@@ -208,6 +241,24 @@ namespace Trax.kkrb
             }
             return 0;
         } // GetWheelPosition
+
+        private string GetTopOfHour(string line)
+        {
+            int hour = 0;
+            string subst = "";
+            if (line != null &&
+                line.Length > 0)
+            {
+                subst = line.Substring(3, 5);
+            }
+
+            if (subst == "00:00")
+            {
+                return "top";
+            }
+            return "";
+
+        }
 
         private int GetHour(string line)
         {
