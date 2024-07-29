@@ -107,31 +107,10 @@ namespace Trax.kkrb
                         string[] fields = lines[i].Split(' ');
                         if (cTopOfHour == "yes")
                         {
-                            if (iHour > 12)
-                            {
-                                switch (iHour)
-                                {
-                                    case 13:
-                                        iHour = 1;
-                                        break;
-                                    case 14:
-                                        iHour = 2;
-                                        break;
-                                    case 15:
-                                        iHour = 3;
-                                        break;
-                                    case 16:
-                                        iHour = 4;
-                                        break;
-                                    case 17:
-                                        iHour = 5;
-                                        break;
-                                }
-                            }
                             cTopOfHour = "no";
                             writer.WriteLine();
                             writer.WriteLine("*****************************************");
-                            writer.WriteLine($"Top of the {iHour}:00:00 hour");
+                            writer.WriteLine($"          Top of the {lines[i].Substring(0, 5)} hour");
                             writer.WriteLine("*****************************************");
                             writer.WriteLine();
                         }
@@ -145,7 +124,7 @@ namespace Trax.kkrb
                             if (lines[i].Contains("VOICETRACK") ||
                                 lines[i].Contains("Voice Track"))
                             {
-                                whichTag = SelectTag(rando.Next(7, 10000));
+                                whichTag = SelectTag(rando.Next(7, 2501));
                                 writer.WriteLine();
                                 writer.WriteLine($"{fields[3]}");
                                 writer.WriteLine("----------------");
@@ -189,75 +168,22 @@ namespace Trax.kkrb
             {
                 return tag4;
             }
-            if (randomTag % 2 == 0)
+            else if (randomTag % 2 == 0)
             {
                 return tag2;
             }
-            if (randomTag % 3 == 0)
+            else if (randomTag % 3 == 0)
             {
                 return tag3;
             }
             return tag1;
         }
 
-
         private bool IsPrime(int whatNumber)
         {
-            for (uint i = 8; i < whatNumber; i++)
+            for (int i = 8; i < whatNumber; i++)
                 if (whatNumber % i == 0) return false;
             return true;
-        }
-
-        private int GetMinutePosition(string vtword)
-        {
-            int minutePos = 0;
-            string subst = "";
-            if (vtword != null &&
-                vtword.Length > 0)
-            {
-                subst = vtword.Substring(vtword.Length - 2, 2);
-            }
-
-            if (int.TryParse(subst, out minutePos))
-            {
-                return minutePos;
-            }
-            return 0;
-        } // GetMinutePosition
-
-        private int GetWheelPosition(string vtword)
-        {
-            int wheelPos = 0;
-            string subst = "";
-            if (vtword != null &&
-                vtword.Length > 0)
-            {
-                subst = vtword.Substring(vtword.Length - 4, 4);
-            }
-
-            if (int.TryParse(subst, out wheelPos))
-            {
-                return wheelPos;
-            }
-            return 0;
-        } // GetWheelPosition
-
-        private string GetTopOfHour(string line)
-        {
-            int hour = 0;
-            string subst = "";
-            if (line != null &&
-                line.Length > 0)
-            {
-                subst = line.Substring(3, 5);
-            }
-
-            if (subst == "00:00")
-            {
-                return "top";
-            }
-            return "";
-
         }
 
         private int GetHour(string line)
